@@ -1,2 +1,2 @@
 # Seaquake
-Business Analyst intern at Seaquake
+Crypto Exchange data analysis for Seaquake
