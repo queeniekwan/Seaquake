@@ -7,8 +7,8 @@ from configparser import ConfigParser
 # get Config
 config = ConfigParser()
 config.read('live ticker/config.ini')
-api_key = config.get('binance', 'api_key')
-api_secret = config.get('binance', 'api_key')
+api_key = config.get('binance', 'BINANCE_KEY')
+api_secret = config.get('binance', 'BINANCE_SECRET')
 
 # Instantiate a client
 client = Client(api_key, api_secret)

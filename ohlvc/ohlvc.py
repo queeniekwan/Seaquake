@@ -13,19 +13,13 @@ limit = 100
 # Data formating parameters
 headers = True
 isodate = True
-weekday = False
-hour = False
+year = True
+weekday = True
+hour = True
 
-if timeframe == '1d':
-    weekday = True
-if timeframe == '1h':
-    hour = True
+new_path = f'ohlvc/seasonality/{exchange_id}_hourly.csv'
 
-if weekday:
-    new_path = f'ohlvc/seasonality/weekday/{exchange_id}_weekday.csv'
-if hour:
-    new_path = f'ohlvc/seasonality/daily_hour/{exchange_id}_daily_hour.csv'
 
 # Get, clean, and store data
 scrape_candles_to_csv(raw_path, exchange_id, max_retries, symbol, timeframe, since, limit)
-formatdata(raw_path, new_path, headers, isodate, weekday, hour)
+formatdata(raw_path, new_path, headers, isodate, year, weekday, hour)

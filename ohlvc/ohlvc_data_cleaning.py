@@ -19,17 +19,33 @@ def add_isodate(df):
 
     df.insert(1, 'ISO8601', iso_list, True)
 
+def add_year(df):
+    '''
+    add a column of Weekdays (str)
+    '''
+    year_list = []
+    for utc in df['UTC']:
+        dt = datetime.fromtimestamp(utc/1000) #convert UTC milliseconds (int) to Datetime object
+        year = dt.strftime('%Y')
+        year_list.append(year)
+
+    df.insert(2, 'Year', year_list, True)
+
 def add_weekday(df):
     '''
     add a column of Weekdays (str)
     '''
     weekday_list = []
+    weekday_number_list = []
     for utc in df['UTC']:
         dt = datetime.fromtimestamp(utc/1000) #convert UTC milliseconds (int) to Datetime object
         weekday = dt.strftime('%A')
         weekday_list.append(weekday)
-    
-    df.insert(2, 'Weekday', weekday_list, True)
+        weekday_number = dt.strftime('%w')
+        weekday_number_list.append(weekday_number)
+
+    df.insert(3, 'Weekday(n)', weekday_number_list, True)
+    df.insert(4, 'Weekday', weekday_list, True)
 
 def add_hour(df):
     '''
@@ -43,7 +59,7 @@ def add_hour(df):
     
     df.insert(2, 'Hour', hour_list, True)
 
-def formatdata(old_path, new_path, headers=True, isodate=True, weekday=False, hour=False):
+def formatdata(old_path, new_path, headers=True, isodate=True, year=True, weekday=False, hour=False):
     '''
     format data with specific requirements, and export to csv file
     '''
@@ -53,6 +69,8 @@ def formatdata(old_path, new_path, headers=True, isodate=True, weekday=False, ho
         add_headers(df)
     if isodate:
         add_isodate(df)
+    if year:
+        add_year(df)
     if weekday:
         add_weekday(df)
     if hour:
