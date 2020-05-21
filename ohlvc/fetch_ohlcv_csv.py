@@ -65,10 +65,11 @@ def scrape_candles_to_csv(filename, exchange_id, max_retries, symbol, timeframe,
 
 
 # -----------------------------------------------------------------------------
+def main():
+    scrape_candles_to_csv('ohlvc/candles.csv','binance', 3,'BTC/USDT', '1d', '2019-01-01T00:00:00Z', 100)
 
-scrape_candles_to_csv('ohlvc/binance.csv','binance', 3,'BTC/USDT', '1d', '2019-01-01T00:00:00Z', 100)
-# scrape_candles_to_csv('kraken.csv','kraken', 3,'BTC/USD', '1d', '2019-01-01T00:00:00Z', 100)
-# scrape_candles_to_csv('coinbasepro.csv','coinbasepro', 3,'BTC/USD', '1d', '2019-01-01T00:00:00Z', 100)
-# scrape_candles_to_csv('bittrex.csv','bittrex', 3,'BTC/USD', '1d', '2019-01-01T00:00:00Z', 100)
+if __name__ == "__main__":
+    main()
+
 
 

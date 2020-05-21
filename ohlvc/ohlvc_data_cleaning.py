@@ -43,19 +43,20 @@ def add_hour(df):
     
     df.insert(2, 'Hour', hour_list, True)
 
-def formatdata(df):
-    add_headers(df)
-    add_isodate(df)
-    add_weekday(df)
-    # add_hour(df)
+def formatdata(old_path, new_path, headers=True, isodate=True, weekday=False, hour=False):
+    '''
+    format data with specific requirements, and export to csv file
+    '''
+    df = pd.read_csv(old_path)
 
-# -----------------------------------------------------------------------------
-def main():
-    df = pd.read_csv("ohlvc/binance.csv")
-    formatdata(df)
-    # print(df.head(10))
-    # df.to_csv('daily_hour_volume/binance_daily_hour.csv', index=False)
-    df.to_csv('daily_hour_volume/binance_daily_hour.csv', index=False)
-
-if __name__ == "__main__":
-    main()
+    if headers:
+        add_headers(df)
+    if isodate:
+        add_isodate(df)
+    if weekday:
+        add_weekday(df)
+    if hour:
+        add_hour(df)
+    
+    df.to_csv(new_path, index=False)
+    print(f'Formatted data saved to {new_path}')
