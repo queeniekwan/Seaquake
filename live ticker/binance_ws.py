@@ -60,7 +60,7 @@ def handle_message(msg):
                         total_traded_quote_asset_volume real
                         )""")
 
-        c.execute("INSERT INTO binance (UTC, time, symbol, price_change, price_change_percent, weighted_average_price, close_price, open_price, high_price, low_price, total_traded_base_asset_volume, total_traded_quote_asset_volume) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        c.execute("INSERT into binance (UTC, time, symbol, price_change, price_change_percent, weighted_average_price, close_price, open_price, high_price, low_price, total_traded_base_asset_volume, total_traded_quote_asset_volume) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (log['UTC'], log['Time'], log['Symbol'], log['Price change'], log['Price change percent'],
                     log['Weighted average price'], log['Close price'], log['Open price'], log['High price'], log['Low price'],
                     log['Total traded base asset volume'], log['Total traded quote asset volume'])
@@ -75,8 +75,8 @@ conn_key = bm.start_symbol_ticker_socket('BTCUSDT', handle_message)
 bm.start()
 
 # let some data flow..
-time.sleep(10)
+# time.sleep(10)
 
 
 # stop the socket manager
-bm.stop_socket(conn_key)
+# bm.stop_socket(conn_key)
