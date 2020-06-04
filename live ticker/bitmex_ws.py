@@ -2,7 +2,6 @@ from bitmex_websocket import BitMEXWebsocket
 import logging
 from time import sleep
 
-
 # Basic use of websocket.
 def run():
     logger = setup_logger()
@@ -16,12 +15,7 @@ def run():
     # Run forever
     while(ws.ws.sock.connected):
         logger.info("Ticker: %s" % ws.get_ticker())
-        # if ws.api_key:
-        #     logger.info("Funds: %s" % ws.funds())
-        # logger.info("Market Depth: %s" % ws.market_depth())
-        # logger.info("Recent Trades: %s\n\n" % ws.recent_trades())
         sleep(5)
-
 
 def setup_logger():
     # Prints logger info to terminal
@@ -34,7 +28,6 @@ def setup_logger():
     ch.setFormatter(formatter)
     logger.addHandler(ch)
     return logger
-
 
 if __name__ == "__main__":
     run()

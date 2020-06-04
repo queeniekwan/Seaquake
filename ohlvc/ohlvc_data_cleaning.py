@@ -59,7 +59,7 @@ def add_hour(df):
     
     df.insert(2, 'Hour', hour_list, True)
 
-def formatdata(old_path, new_path, headers=True, isodate=True, year=True, weekday=False, hour=False):
+def formatdata(old_path, new_path, headers=True, isodate=True, year=False, weekday=False, hour=False):
     '''
     format data with specific requirements, and export to csv file
     '''

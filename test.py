@@ -1,6 +1,7 @@
 import ccxt
+import time
+import pprint as pp
 
-exchange = ccxt.coinbasepro()
-# binance_ticker = binance.id, binance.fetch_tickers('BTC/USDT')
-
-print(exchange.symbols)
+exchange = ccxt.kraken()
+exchange.load_products()
+pp.pprint(exchange.fetch_ticker("BTC/ETH"))

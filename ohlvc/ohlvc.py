@@ -1,23 +1,27 @@
 from ohlvc_data_cleaning import formatdata
 from fetch_ohlcv_csv import scrape_candles_to_csv
 
+USDT_MARKETS = ['BTC/USDT']
+
 # OHLVC data parameters
 raw_path  = 'ohlvc/crandles.csv'
 exchange_id = 'binance'
 max_retries = 3
-symbol = 'BTC/USDT'
-timeframe = '1h'
-since = '2019-01-01T00:00:00Z' #iso8601 format
-limit = 100 
+symbol = 'XLM/USDT'
+timeframe = '1M'
+since = '2020-01-01T00:00:00Z' #iso8601 format
+limit = 6
 
 # Data formating parameters
 headers = True
 isodate = True
-year = True
-weekday = True
-hour = True
+year = False
+weekday = False
+hour = False
 
-new_path = f'ohlvc/seasonality/{exchange_id}_hourly.csv'
+symbol_n = symbol.replace('/',' ')
+
+new_path = f'ohlvc/seasonality/binance_volume/{symbol_n}.csv'
 
 
 # Get, clean, and store data
