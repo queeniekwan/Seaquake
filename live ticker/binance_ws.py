@@ -7,7 +7,7 @@ import sqlite3
 
 # get Config
 config = ConfigParser()
-config.read('live ticker/config.ini')
+config.read('config.ini')
 api_key = config.get('binance', 'BINANCE_KEY')
 api_secret = config.get('binance', 'BINANCE_SECRET')
 

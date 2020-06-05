@@ -1,5 +1,4 @@
 import asyncio
-from configparser import ConfigParser
 from copra.websocket import Channel, Client
 from datetime import datetime 
 import sqlite3
