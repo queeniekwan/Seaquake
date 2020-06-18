@@ -6,7 +6,10 @@ import sqlite3
 class Ticker(Client):
     def on_message(self, msg):
         if msg['type'] == 'error':
-            print(msg)
+            try:
+                connect_ws()
+            except:
+                print(msg)
 
         elif msg['type'] == 'ticker':
             print(msg)
@@ -31,14 +34,21 @@ class Ticker(Client):
             
             conn.commit()
             conn.close()
-            print('saved to db')
+            # print('saved to db')
 
-loop = asyncio.get_event_loop()
-channel = Channel('ticker', 'BTC-USD')
-ws = Ticker(loop, channel)
+def connect_ws():
+    loop = asyncio.get_event_loop()
+    channel = Channel('ticker', 'BTC-USD')
+    ws = Ticker(loop, channel)
 
-try:
-    loop.run_forever()
-except KeyboardInterrupt:
-    loop.run_until_complete(ws.close())
-    loop.close()
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:
+        loop.run_until_complete(ws.close())
+        loop.close()
+
+def main():
+    connect_ws()
+
+if __name__ == "__main__":
+    main()

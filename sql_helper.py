@@ -5,13 +5,17 @@ conn = sqlite3.connect('live ticker/ticker.db')
 c = conn.cursor()
 
 # c.execute("SELECT * FROM binance_volume")
+
 # c.execute("SELECT * FROM binance")
 # c.execute("SELECT * FROM coinbasepro")
-# rows = c.fetchall()
-# for row in rows:
-#         print(row)
+# c.execute("SELECT * FROM bitfinex")
+c.execute("SELECT * FROM huobiglobal")
 
-c.execute("DROP TABLE kraken")
+rows = c.fetchall()
+for row in rows:
+        print(row)
+
+# c.execute("DROP TABLE huobiglobal")
 
 # conn.commit()
 conn.close()
