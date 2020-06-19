@@ -1,5 +1,3 @@
-import time
-from datetime import datetime
 from binance.client import Client
 from binance.websockets import BinanceSocketManager
 from configparser import ConfigParser
