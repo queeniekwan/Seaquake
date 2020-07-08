@@ -1,5 +1,10 @@
 import pandas as pd
+import json
 
-data = pd.read_json(r'fin dashboard/data.json')
+# with open('fin dashboard/data.json') as f:
+#     data = json.load(f)
+# df = pd.DataFrame(data)
 
-print(data)
+pd.read_json('fin dashboard/data.json', orient='table')
+
+print(df.head())
