@@ -40,7 +40,7 @@ def create_dash(df):
                     'profitable trades', 'profitable trades', 'unprofitable trades', 'unprofitable trades',
                     'both sides maker', 'both sides maker', 'entry maker only', 'entry maker only', 'exit maker only', 'exit maker only', 'both sides taker', 'both sides taker',
                     'maker trade', 'maker trade', 'taker trade', 'taker trade',
-                    'maker order', 'maker order', 'maker order volume', 'maker order volume', 'taker order', 'taker order', 'taker order volume', 'taker order volume', 
+                    'maker order', 'maker order', 'maker order volume', 'taker order', 'taker order', 'taker order volume', 
                     'long trade', 'long trade', 'short trade', 'short trade',
                     'entry limit order', 'entry limit order', 'entry market order', 'entry market order', 'exit limit order', 'exit limit order', 'exit market order', 'exit market order']
     
@@ -48,7 +48,7 @@ def create_dash(df):
                         'value', 'percentage', 'value', 'percentage', 
                         'value', 'percentage', 'value', 'percentage', 'value', 'percentage', 'value', 'percentage', 
                         'value', 'percentage', 'value', 'percentage', 
-                        'value', 'percentage', 'value', 'percentage', 'value', 'percentage', 'value', 'percentage', 
+                        'value', 'percentage', 'value', 'value', 'percentage', 'value', 
                         'value', 'percentage', 'value', 'percentage', 
                         'value', 'percentage', 'value', 'percentage', 'value', 'percentage', 'value', 'percentage']
     
@@ -104,7 +104,7 @@ def fill_column(df, start_date=None, end_date=None):
     # calculate value for each metric
     trades = data['id'].count()
     if trades == 0:
-        column = ['N/A'] * 43
+        column = ['N/A'] * 41
     else:
         total_volume_asset = data['total_volume_asset'].sum()
         total_volume_dollar = data['total_volume_dollar'].sum()
@@ -135,11 +135,9 @@ def fill_column(df, start_date=None, end_date=None):
         maker_order = data[data['entry_trade_maker']==True].count()['id'] + data[data['exit_trade_maker']==True].count()['id']
         maker_order_percent = maker_order / (trades * 2)
         maker_order_volume = data[data['entry_trade_maker']==True].sum()['entry_trade_size_dollar'] + data[data['exit_trade_maker']==True].sum()['exit_trade_size_dollar']
-        maker_order_volume_percent = maker_order_volume / total_volume_dollar
         taker_order = data[data['entry_trade_maker']==False].count()['id'] + data[data['exit_trade_maker']==False].count()['id']
         taker_order_percent = taker_order / (trades * 2)
         taker_order_volume = data[data['entry_trade_maker']==False].sum()['entry_trade_size_dollar'] + data[data['exit_trade_maker']==False].sum()['exit_trade_size_dollar']
-        taker_order_volume_percent = taker_order_volume / total_volume_dollar
 
         long_trade = data[data['long']==True].count()['id']
         long_trade_percent = long_trade / trades
@@ -160,7 +158,7 @@ def fill_column(df, start_date=None, end_date=None):
                     profitable, profitable_percent, unprofitable, unprofitable_percent,
                     both_sides_maker, both_sides_maker_percent, entry_maker, entry_maker_percent, exit_maker, exit_maker_percent, both_sides_taker, both_sides_taker_percent, 
                     maker_trade, maker_trade_percent, taker_trade, taker_trade_percent, 
-                    maker_order, maker_order_percent, maker_order_volume, maker_order_volume_percent, taker_order, taker_order_percent, taker_order_volume, taker_order_volume_percent, 
+                    maker_order, maker_order_percent, maker_order_volume, taker_order, taker_order_percent, taker_order_volume, 
                     long_trade, long_trade_percent, short_trade, short_trade_percent, 
                     entry_limit_order, entry_limit_order_percent, entry_market_order, entry_market_order_percent, exit_limit_order, exit_limit_order_percent, exit_market_order, exit_market_order_percent]
         
@@ -170,17 +168,18 @@ def fill_column(df, start_date=None, end_date=None):
 
     
 def main():
+    # open json input file and convert to df
     with open('fin dashboard/data.json') as f:
         data = json.load(f)
         df = pd.read_json(data)
     
+    # process file and export dash to json
     df = filter_data(df)
-
-    # print(df.columns)
-
     dash = create_dash(df)
-    print(dash)
     dash.to_json('fin dashboard/fin_dash_data.json')
+    print(dash)
+
+    # dash.to_csv('fin dashboard/fin_data.csv')
 
 if __name__ == "__main__":
     main()
