@@ -42,7 +42,8 @@ def create_dash(df):
                     'maker trade', 'maker trade', 'taker trade', 'taker trade',
                     'maker order', 'maker order', 'maker order volume', 'taker order', 'taker order', 'taker order volume', 
                     'long trade', 'long trade', 'short trade', 'short trade',
-                    'entry limit order', 'entry limit order', 'entry market order', 'entry market order', 'exit limit order', 'exit limit order', 'exit market order', 'exit market order']
+                    'entry limit order', 'entry limit order', 'entry market order', 'entry market order', 'exit limit order', 'exit limit order', 'exit market order', 'exit market order',
+                    'timeframe', 'weekday']
     
     dash.value_type = ['value', 'value', 'value', 'value', 'value', 'value', 'value', 
                         'value', 'percentage', 'value', 'percentage', 
@@ -50,7 +51,8 @@ def create_dash(df):
                         'value', 'percentage', 'value', 'percentage', 
                         'value', 'percentage', 'value', 'value', 'percentage', 'value', 
                         'value', 'percentage', 'value', 'percentage', 
-                        'value', 'percentage', 'value', 'percentage', 'value', 'percentage', 'value', 'percentage']
+                        'value', 'percentage', 'value', 'percentage', 'value', 'percentage', 'value', 'percentage',
+                        'str', 'str']
     
     # fill table columns
     # get utc today 00:00
@@ -64,47 +66,62 @@ def create_dash(df):
     start = today_start
     end = None
     for column in dash[['today', 'yesterday', 'day-3', 'day-4', 'day-5', 'day-6', 'day-7']]: 
-        dash[column] = fill_column(df, start_date=start, end_date=end)
+        dash[column] = fill_column(df, start_date=start, end_date=end, col_type='day')
         end = start
         start -= timedelta(days=1)
     
     # loop fill this week to week-4
-    start = today_start - timedelta(weeks=1)
+    wd_today = today_start.weekday() #weekday today (int, 0=Mon, 7=Sun)
+    start = today_start - timedelta(days=wd_today)
     end = None
     for column in dash[['this_week', 'last_week', 'week-3', 'week-4']]:
-        dash[column] = fill_column(df, start_date=start, end_date=end)
+        dash[column] = fill_column(df, start_date=start, end_date=end, col_type='week')
         end = start
         start -= timedelta(weeks=1)
         
     # loop fill this month to last month
-    first_day_this_month = today_start.replace(day=1)
     start = today_start.replace(day=1)
     end = None
     for column in dash[['this_month', 'last_month']]:
-        dash.this_month = fill_column(df, start_date=first_day_this_month)
-        dash[column] = fill_column(df, start_date=start, end_date=end)
+        dash[column] = fill_column(df, start_date=start, end_date=end, col_type='month')
         end = start
         last_day_prev_month = start - timedelta(days=1)
         start = last_day_prev_month.replace(day=1)
 
     return dash
 
-def fill_column(df, start_date=None, end_date=None):
+def fill_column(df, start_date=None, end_date=None, col_type=None):
     ''' return a list of data for a specific column in the dash Dataframe from the df Dataframe
-        df is the source data Dataframe, start_date and end_date filter data within this date range (default is None)
+        df is the source data Dataframe, start_date and end_date filter data within this date range (default is None), col_type is type of this column (str: day, week, or month)
+
     '''
     # create a subset of data within the time range
     if start_date and end_date:
-        data = df[(df.entry_trade_time_iso8601 > start_date) & (df.entry_trade_time_iso8601 < end_date)]
+        data = df[(df.entry_trade_time_iso8601 >= start_date) & (df.entry_trade_time_iso8601 <= end_date)]
     elif start_date:
-        data = df[(df.entry_trade_time_iso8601 > start_date)]
+        data = df[(df.entry_trade_time_iso8601 >= start_date)]
     else:
         data = df.copy()
 
+    # date range and day of week
+    if col_type == 'day':
+        timeframe = start_date.strftime('%Y/%m/%d')
+        wd = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        weekday = wd[start_date.weekday()]
+    elif col_type == 'week':
+        timeframe = start_date.strftime('%Y/%m/%d') + ' - ' + (start_date + timedelta(days=6)).strftime('%Y/%m/%d')
+        weekday = None
+    elif col_type == 'month':
+        timeframe = start_date.strftime('%Y/%m')
+        weekday = None
+    else:
+        timeframe = (df['entry_trade_time_iso8601'].min()).strftime('%Y/%m/%d') + ' - ' + (df['entry_trade_time_iso8601'].max()).strftime('%Y/%m/%d')
+        weekday = None
+        
     # calculate value for each metric
     trades = data['id'].count()
     if trades == 0:
-        column = ['N/A'] * 41
+        column = ['N/A'] * 41 + [timeframe, weekday]
     else:
         total_volume_asset = data['total_volume_asset'].sum()
         total_volume_dollar = data['total_volume_dollar'].sum()
@@ -160,7 +177,8 @@ def fill_column(df, start_date=None, end_date=None):
                     maker_trade, maker_trade_percent, taker_trade, taker_trade_percent, 
                     maker_order, maker_order_percent, maker_order_volume, taker_order, taker_order_percent, taker_order_volume, 
                     long_trade, long_trade_percent, short_trade, short_trade_percent, 
-                    entry_limit_order, entry_limit_order_percent, entry_market_order, entry_market_order_percent, exit_limit_order, exit_limit_order_percent, exit_market_order, exit_market_order_percent]
+                    entry_limit_order, entry_limit_order_percent, entry_market_order, entry_market_order_percent, exit_limit_order, exit_limit_order_percent, exit_market_order, exit_market_order_percent,
+                    timeframe, weekday]
         
 
     return column
