@@ -16,6 +16,9 @@ def filter_data(df):
     # add market_made_type
     df['market_made_type'] = df.apply(mm_condition, axis='columns')
 
+    # add hold time (seconds)
+    df['hold_time'] = df.exit_trade_time_unix - df.entry_trade_time_unix
+
     return df
 
 def mm_condition(df):
@@ -27,22 +30,23 @@ def mm_condition(df):
         return 'entry maker'
     elif df.entry_trade_maker == False & df.exit_trade_maker == True:
         return 'exit maker'
-    else:
+    elif df.entry_trade_maker == False & df.exit_trade_maker == False:
         return 'both sides taker'
 
-def create_dash(df):
+def create_fin_dash(df):
     ''' create and return the dashboard table with data from df '''
     
     # create table frame
     dash = pd.DataFrame(columns=['metric', 'value_type', 'total', 'today', 'yesterday', 'day-3', 'day-4', 'day-5', 'day-6', 'day-7', 'this_week', 'last_week', 'week-3', 'week-4', 'this_month', 'last_month'])
     
-    dash.metric = ['trades', 'total volume asset', 'total volume dollar', 'spread profit', 'fee rebate', 'fee paid', 'net profit', 
+    dash.metric = ['trades', 'trade volume asset', 'trade volume dollar', 'spread profit', 'fee rebate', 'fee paid', 'net profit', 
                     'profitable trades', 'profitable trades', 'unprofitable trades', 'unprofitable trades',
                     'both sides maker', 'both sides maker', 'entry maker only', 'entry maker only', 'exit maker only', 'exit maker only', 'both sides taker', 'both sides taker',
                     'maker trade', 'maker trade', 'taker trade', 'taker trade',
                     'maker order', 'maker order', 'maker order volume', 'taker order', 'taker order', 'taker order volume', 
                     'long trade', 'long trade', 'short trade', 'short trade',
                     'entry limit order', 'entry limit order', 'entry market order', 'entry market order', 'exit limit order', 'exit limit order', 'exit market order', 'exit market order',
+                    'avg order size asset', 'avg order size dollar', 'win trades avg hold time', 'lose trades avg hold time',
                     'timeframe', 'weekday']
     
     dash.value_type = ['value', 'value', 'value', 'value', 'value', 'value', 'value', 
@@ -52,6 +56,7 @@ def create_dash(df):
                         'value', 'percentage', 'value', 'value', 'percentage', 'value', 
                         'value', 'percentage', 'value', 'percentage', 
                         'value', 'percentage', 'value', 'percentage', 'value', 'percentage', 'value', 'percentage',
+                        'value', 'value', 'value', 'value',
                         'str', 'str']
     
     # fill table columns
@@ -97,7 +102,7 @@ def fill_column(df, start_date=None, end_date=None, col_type=None):
     '''
     # create a subset of data within the time range
     if start_date and end_date:
-        data = df[(df.entry_trade_time_iso8601 >= start_date) & (df.entry_trade_time_iso8601 <= end_date)]
+        data = df[(df.entry_trade_time_iso8601 >= start_date) & (df.entry_trade_time_iso8601 < end_date)]
     elif start_date:
         data = df[(df.entry_trade_time_iso8601 >= start_date)]
     else:
@@ -110,18 +115,18 @@ def fill_column(df, start_date=None, end_date=None, col_type=None):
         weekday = wd[start_date.weekday()]
     elif col_type == 'week':
         timeframe = start_date.strftime('%Y/%m/%d') + ' - ' + (start_date + timedelta(days=6)).strftime('%Y/%m/%d')
-        weekday = None
+        weekday = 'N/A'
     elif col_type == 'month':
         timeframe = start_date.strftime('%Y/%m')
-        weekday = None
+        weekday = 'N/A'
     else:
         timeframe = (df['entry_trade_time_iso8601'].min()).strftime('%Y/%m/%d') + ' - ' + (df['entry_trade_time_iso8601'].max()).strftime('%Y/%m/%d')
-        weekday = None
+        weekday = 'N/A'
         
     # calculate value for each metric
     trades = data['id'].count()
     if trades == 0:
-        column = ['N/A'] * 41 + [timeframe, weekday]
+        column = ['N/A'] * 41 + [timeframe, weekday] + ['N/A'] * 4
     else:
         total_volume_asset = data['total_volume_asset'].sum()
         total_volume_dollar = data['total_volume_dollar'].sum()
@@ -170,6 +175,11 @@ def fill_column(df, start_date=None, end_date=None, col_type=None):
         exit_market_order = data[data['exit_trade_order_type']=='MARKET'].count()['id']
         exit_market_order_percent = exit_market_order / trades
 
+        avg_order_size_asset = data['entry_trade_size_asset'].mean()
+        avg_order_size_dollar = data['total_volume_dollar'].mean() / 2
+        win_trades_avg_hold_time = data[data['profit_dollar']>0].mean()['hold_time']
+        lose_trades_avg_hold_time = data[data['profit_dollar']<0].mean()['hold_time']
+
         # put all values in a list
         column = [trades, total_volume_asset, total_volume_dollar, spread_profit, fee_rebate, fee_paid, net_profit, 
                     profitable, profitable_percent, unprofitable, unprofitable_percent,
@@ -178,23 +188,28 @@ def fill_column(df, start_date=None, end_date=None, col_type=None):
                     maker_order, maker_order_percent, maker_order_volume, taker_order, taker_order_percent, taker_order_volume, 
                     long_trade, long_trade_percent, short_trade, short_trade_percent, 
                     entry_limit_order, entry_limit_order_percent, entry_market_order, entry_market_order_percent, exit_limit_order, exit_limit_order_percent, exit_market_order, exit_market_order_percent,
+                    avg_order_size_asset, avg_order_size_dollar, win_trades_avg_hold_time, lose_trades_avg_hold_time,
                     timeframe, weekday]
         
 
     return column
 
+def creat_mmlevel_dash(df):
+    '''
+    '''
+    pass
 
     
 def main():
     # open json input file and convert to df
-    with open('fin dashboard/data.json') as f:
+    with open('fin dashboard/data_new.json') as f:
         data = json.load(f)
         df = pd.read_json(data)
     
     # process file and export dash to json
     df = filter_data(df)
-    dash = create_dash(df)
-    dash.to_json('fin dashboard/fin_dash_data.json')
+    dash = create_fin_dash(df)
+    # dash.to_json('fin dashboard/fin_dash_data.json')
     print(dash)
 
     # dash.to_csv('fin dashboard/fin_data.csv')
