@@ -34,7 +34,7 @@ def mm_condition(df):
         return 'both sides taker'
 
 def create_fin_dash(df):
-    ''' create and return the dashboard table with data from df '''
+    ''' create and return the fin dashboard table with data from df '''
     
     # create table frame
     dash = pd.DataFrame(columns=['metric', 'value_type', 'total', 'today', 'yesterday', 'day-3', 'day-4', 'day-5', 'day-6', 'day-7', 'this_week', 'last_week', 'week-3', 'week-4', 'this_month', 'last_month'])
@@ -195,9 +195,16 @@ def fill_column(df, start_date=None, end_date=None, col_type=None):
     return column
 
 def creat_mmlevel_dash(df):
-    '''
-    '''
-    pass
+    ''' create and return the mmlevel dashboard table with data from df '''
+    dash = pd.DataFrame(columns=['position', 'mm_level', 
+                                'total_trades', 'win_trades', 'win_rate', 'both_sides_maker', 'PnL','fees_paid', 'revenue_per_level', 'win_trades_avg_holdtime_per_level', 'lost_trades_avg_holdtime_per_level',
+                                'win_trades_avg_holdtime_per_side', 'lost_trades_avg_holdtime_per_side', 'revenue_per_side',
+                                'total_revenue'])
+    
+    dash.position = ['long'] * 5 + ['short'] * 5
+    dash.mm_level = [4, 3, 2, 1, 0, 0, 1, 2, 3, 4]
+
+    return dash
 
     
 def main():
@@ -208,11 +215,15 @@ def main():
     
     # process file and export dash to json
     df = filter_data(df)
-    dash = create_fin_dash(df)
-    # dash.to_json('fin dashboard/fin_dash_data.json')
-    print(dash)
+    print(df)
+    # fin_dash = create_fin_dash(df)
+    mm_dash = creat_mmlevel_dash(df)
 
-    # dash.to_csv('fin dashboard/fin_data.csv')
+    # print(fin_dash)
+    print(mm_dash)
+
+    # dash.to_json('fin dashboard/fin_dash_data.json')
+    mm_dash.to_csv('fin dashboard/fin_data.csv')
 
 if __name__ == "__main__":
     main()
