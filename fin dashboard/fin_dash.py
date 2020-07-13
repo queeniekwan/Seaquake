@@ -2,7 +2,7 @@ import pandas as pd
 import json
 from datetime import datetime, timedelta
 
-def filter_data(df):
+def clean_data(df):
     ''' filter and edit raw data into clean data '''
     # filter out rows where entry_trade_size_asset != exit_trade_size_asset; entry_trade_size_dollar = 0; exit_trade_size_dollar = 0
     df = df[df.entry_trade_size_asset == df.exit_trade_size_asset]
@@ -65,13 +65,13 @@ def create_fin_dash(df):
     today_start = datetime.strptime(now+' 00:00:00', '%Y-%m-%d %H:%M:%S')
     
     # total
-    dash.total = fill_column(df)
+    dash.total = fill_findash_column(df)
     
     # loop fill today to day-7
     start = today_start
     end = None
     for column in dash[['today', 'yesterday', 'day-3', 'day-4', 'day-5', 'day-6', 'day-7']]: 
-        dash[column] = fill_column(df, start_date=start, end_date=end, col_type='day')
+        dash[column] = fill_findash_column(df, start_date=start, end_date=end, col_type='day')
         end = start
         start -= timedelta(days=1)
     
@@ -80,7 +80,7 @@ def create_fin_dash(df):
     start = today_start - timedelta(days=wd_today)
     end = None
     for column in dash[['this_week', 'last_week', 'week-3', 'week-4']]:
-        dash[column] = fill_column(df, start_date=start, end_date=end, col_type='week')
+        dash[column] = fill_findash_column(df, start_date=start, end_date=end, col_type='week')
         end = start
         start -= timedelta(weeks=1)
         
@@ -88,17 +88,16 @@ def create_fin_dash(df):
     start = today_start.replace(day=1)
     end = None
     for column in dash[['this_month', 'last_month']]:
-        dash[column] = fill_column(df, start_date=start, end_date=end, col_type='month')
+        dash[column] = fill_findash_column(df, start_date=start, end_date=end, col_type='month')
         end = start
         last_day_prev_month = start - timedelta(days=1)
         start = last_day_prev_month.replace(day=1)
 
     return dash
 
-def fill_column(df, start_date=None, end_date=None, col_type=None):
-    ''' return a list of data for a specific column in the dash Dataframe from the df Dataframe
+def fill_findash_column(df, start_date=None, end_date=None, col_type=None):
+    ''' return a list of data for a specific column in the fin_dash Dataframe from the df Dataframe
         df is the source data Dataframe, start_date and end_date filter data within this date range (default is None), col_type is type of this column (str: day, week, or month)
-
     '''
     # create a subset of data within the time range
     if start_date and end_date:
@@ -196,26 +195,73 @@ def fill_column(df, start_date=None, end_date=None, col_type=None):
 
 def creat_mmlevel_dash(df):
     ''' create and return the mmlevel dashboard table with data from df '''
-    dash = pd.DataFrame(columns=['position', 'mm_level', 
-                                'total_trades', 'win_trades', 'win_rate', 'both_sides_maker', 'PnL','fees_paid', 'revenue_per_level', 'win_trades_avg_holdtime_per_level', 'lost_trades_avg_holdtime_per_level',
-                                'win_trades_avg_holdtime_per_side', 'lost_trades_avg_holdtime_per_side', 'revenue_per_side',
+    dash = pd.DataFrame(columns=['long', 'mm_level', 
+                                'total_trades', 'win_trades', 'win_rate', 'both_sides_maker', 'spread','rebate','fee_paid', 'revenue_per_level', 'win_trades_avg_holdtime_per_level', 'lose_trades_avg_holdtime_per_level',
+                                'win_trades_avg_holdtime_per_side', 'lose_trades_avg_holdtime_per_side', 'revenue_per_side',
                                 'total_revenue'])
     
-    dash.position = ['long'] * 5 + ['short'] * 5
+    dash.long = [True] * 5 + [False] * 5
     dash.mm_level = [4, 3, 2, 1, 0, 0, 1, 2, 3, 4]
 
+    # loop fill per level values
+    for i in range(10):
+        dash.loc[i] = fill_mmlevel_row(df, dash.loc[i].long, dash.loc[i].mm_level)
+        # print(dash.loc[i])
+    
+    # calculate and fill per side value
+    dash.win_trades_avg_holdtime_per_side.loc[dash.long == True] = dash[dash.long == True].mean()['win_trades_avg_holdtime_per_level']
+    dash.win_trades_avg_holdtime_per_side.loc[dash.long == False] = dash[dash.long == False].mean()['win_trades_avg_holdtime_per_level']
+
+    dash.lose_trades_avg_holdtime_per_side.loc[dash.long == True] = dash[dash.long == True].mean()['lose_trades_avg_holdtime_per_level']
+    dash.lose_trades_avg_holdtime_per_side.loc[dash.long == False] = dash[dash.long == False].mean()['lose_trades_avg_holdtime_per_level']
+
+    dash.revenue_per_side.loc[dash.long == True] = dash[dash.long == True].sum()['revenue_per_level']
+    dash.revenue_per_side.loc[dash.long == False] = dash[dash.long == False].sum()['revenue_per_level']
+
+    # calculate total revenue
+    dash.total_revenue = dash['revenue_per_level'].sum()
+
+
     return dash
+
+def fill_mmlevel_row(df, position, level):
+    ''' return a list of data for a specific row in the mmlevel_dash Dataframe from the df Dataframe
+        df is the source data Dataframe, position is bool (True = 'long' or False = 'short'), level is int (0 - 4)
+    '''
+    # create a subset of data with specific position and level 
+    data = df[(df.long == position) & (df.market_making_level == level)]
+
+    # calculate value for each metric (column)
+    total_trades = data.count()['id']
+    if total_trades == 0:
+        row = [0] * 10 + [''] * 4 
+    else:
+        win_trades = data[data.total_revenue > 0].count()['id']
+        win_rate = win_trades / total_trades
+        both_sides_maker = data[data.market_made_type == 'both sides maker'].count()['id']
+        spread = data.profit_dollar.sum()
+        rebates = data.fee_rebate.sum()
+        fee_paid = data.fee_paid.sum()
+        revenue_per_level = data.total_revenue.sum()
+        win_trades_avg_holdtime_per_level = data[data.total_revenue > 0].mean()['hold_time']
+        lose_trades_avg_holdtime_per_level = data[data.total_revenue < 0].mean()['hold_time']
+
+        # put all values in a list
+        row = [position, level, total_trades, win_trades, win_rate, both_sides_maker, spread, rebates, fee_paid, revenue_per_level, win_trades_avg_holdtime_per_level, lose_trades_avg_holdtime_per_level] + [''] * 4
+
+    return row
 
     
 def main():
     # open json input file and convert to df
-    with open('fin dashboard/data_new.json') as f:
+    with open('fin dashboard/data.json') as f:
         data = json.load(f)
         df = pd.read_json(data)
     
     # process file and export dash to json
-    df = filter_data(df)
-    print(df)
+    df = clean_data(df)
+    # print(df.columns)
+
     # fin_dash = create_fin_dash(df)
     mm_dash = creat_mmlevel_dash(df)
 
@@ -223,7 +269,9 @@ def main():
     print(mm_dash)
 
     # dash.to_json('fin dashboard/fin_dash_data.json')
-    mm_dash.to_csv('fin dashboard/fin_data.csv')
+    mm_dash.to_json('fin dashboard/mm_dash.json')
+    
+    # mm_dash.to_csv('fin dashboard/fin_data.csv')
 
 if __name__ == "__main__":
     main()
