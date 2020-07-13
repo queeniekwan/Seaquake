@@ -195,28 +195,28 @@ def fill_findash_column(df, start_date=None, end_date=None, col_type=None):
 
 def creat_mmlevel_dash(df):
     ''' create and return the mmlevel dashboard table with data from df '''
-    dash = pd.DataFrame(columns=['long', 'mm_level', 
+    dash = pd.DataFrame(columns=['position', 'mm_level', 
                                 'total_trades', 'win_trades', 'win_rate', 'both_sides_maker', 'spread','rebate','fee_paid', 'revenue_per_level', 'win_trades_avg_holdtime_per_level', 'lose_trades_avg_holdtime_per_level',
                                 'win_trades_avg_holdtime_per_side', 'lose_trades_avg_holdtime_per_side', 'revenue_per_side',
                                 'total_revenue'])
     
-    dash.long = [True] * 5 + [False] * 5
+    dash.position = ['long'] * 5 + ['short'] * 5
     dash.mm_level = [4, 3, 2, 1, 0, 0, 1, 2, 3, 4]
 
     # loop fill per level values
     for i in range(10):
-        dash.loc[i] = fill_mmlevel_row(df, dash.loc[i].long, dash.loc[i].mm_level)
+        dash.loc[i] = fill_mmlevel_row(df, dash.loc[i].position, dash.loc[i].mm_level)
         # print(dash.loc[i])
     
     # calculate and fill per side value
-    dash.win_trades_avg_holdtime_per_side.loc[dash.long == True] = dash[dash.long == True].mean()['win_trades_avg_holdtime_per_level']
-    dash.win_trades_avg_holdtime_per_side.loc[dash.long == False] = dash[dash.long == False].mean()['win_trades_avg_holdtime_per_level']
+    dash.win_trades_avg_holdtime_per_side.loc[dash.position == 'long'] = dash[dash.position == 'long'].mean()['win_trades_avg_holdtime_per_level']
+    dash.win_trades_avg_holdtime_per_side.loc[dash.position == 'short'] = dash[dash.position == 'short'].mean()['win_trades_avg_holdtime_per_level']
 
-    dash.lose_trades_avg_holdtime_per_side.loc[dash.long == True] = dash[dash.long == True].mean()['lose_trades_avg_holdtime_per_level']
-    dash.lose_trades_avg_holdtime_per_side.loc[dash.long == False] = dash[dash.long == False].mean()['lose_trades_avg_holdtime_per_level']
+    dash.lose_trades_avg_holdtime_per_side.loc[dash.position == 'long'] = dash[dash.position == 'long'].mean()['lose_trades_avg_holdtime_per_level']
+    dash.lose_trades_avg_holdtime_per_side.loc[dash.position == 'short'] = dash[dash.position == 'short'].mean()['lose_trades_avg_holdtime_per_level']
 
-    dash.revenue_per_side.loc[dash.long == True] = dash[dash.long == True].sum()['revenue_per_level']
-    dash.revenue_per_side.loc[dash.long == False] = dash[dash.long == False].sum()['revenue_per_level']
+    dash.revenue_per_side.loc[dash.position == 'long'] = dash[dash.position == 'long'].sum()['revenue_per_level']
+    dash.revenue_per_side.loc[dash.position == 'short'] = dash[dash.position == 'short'].sum()['revenue_per_level']
 
     # calculate total revenue
     dash.total_revenue = dash['revenue_per_level'].sum()
@@ -226,10 +226,14 @@ def creat_mmlevel_dash(df):
 
 def fill_mmlevel_row(df, position, level):
     ''' return a list of data for a specific row in the mmlevel_dash Dataframe from the df Dataframe
-        df is the source data Dataframe, position is bool (True = 'long' or False = 'short'), level is int (0 - 4)
+        df is the source data Dataframe, position is str ('long' or 'short'), level is int (0 - 4)
     '''
     # create a subset of data with specific position and level 
-    data = df[(df.long == position) & (df.market_making_level == level)]
+    if position == 'long':
+        data = df[(df.long == True) & (df.market_making_level == level)]
+    else:
+        data = df[(df.long == False) & (df.market_making_level == level)]
+
 
     # calculate value for each metric (column)
     total_trades = data.count()['id']
@@ -260,13 +264,13 @@ def main():
     
     # process file and export dash to json
     df = clean_data(df)
-    # print(df.columns)
+    # print(df.dtypes)
 
     # fin_dash = create_fin_dash(df)
     mm_dash = creat_mmlevel_dash(df)
 
     # print(fin_dash)
-    print(mm_dash)
+    # print(mm_dash.dtypes)
 
     # dash.to_json('fin dashboard/fin_dash_data.json')
     mm_dash.to_json('fin dashboard/mm_dash.json')
