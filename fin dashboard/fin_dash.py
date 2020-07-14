@@ -23,15 +23,16 @@ def clean_data(df):
 
 def mm_condition(df):
     ''' apply condition for market_made_type '''
-
-    if df.entry_trade_maker == True & df.exit_trade_maker == True:
-        return 'both sides maker'
-    elif df.entry_trade_maker == True & df.exit_trade_maker == False:
-        return 'entry maker'
-    elif df.entry_trade_maker == False & df.exit_trade_maker == True:
-        return 'exit maker'
-    elif df.entry_trade_maker == False & df.exit_trade_maker == False:
-        return 'both sides taker'
+    if df.entry_trade_maker == True:
+        if df.exit_trade_maker == True:
+            return 'both sides maker'
+        else:
+            return 'entry maker'
+    else:
+        if df.exit_trade_maker == True:
+            return 'exit maker'
+        else:
+            return 'both sides taker'
 
 def create_fin_dash(df):
     ''' create and return the fin dashboard table with data from df '''
@@ -264,16 +265,17 @@ def main():
     
     # process file and export dash to json
     df = clean_data(df)
+    df.to_csv('fin dashboard/clean_data.csv')
     # print(df.dtypes)
 
     # fin_dash = create_fin_dash(df)
-    mm_dash = creat_mmlevel_dash(df)
+    # mm_dash = creat_mmlevel_dash(df)
 
     # print(fin_dash)
     # print(mm_dash.dtypes)
 
     # dash.to_json('fin dashboard/fin_dash_data.json')
-    mm_dash.to_json('fin dashboard/mm_dash.json')
+    # mm_dash.to_json('fin dashboard/mm_dash.json')
     
     # mm_dash.to_csv('fin dashboard/fin_data.csv')
 
