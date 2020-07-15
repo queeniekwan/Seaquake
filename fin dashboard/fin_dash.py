@@ -120,7 +120,7 @@ def fill_findash_column(df, start_date=None, end_date=None, col_type=None):
         timeframe = start_date.strftime('%Y/%m')
         weekday = 'N/A'
     else:
-        timeframe = (df['entry_trade_time_iso8601'].min()).strftime('%Y/%m/%d') + ' - ' + (df['entry_trade_time_iso8601'].max()).strftime('%Y/%m/%d')
+        timeframe = (data['entry_trade_time_iso8601'].min()).strftime('%Y/%m/%d') + ' - ' + (data['entry_trade_time_iso8601'].max()).strftime('%Y/%m/%d')
         weekday = 'N/A'
         
     # calculate value for each metric
@@ -256,28 +256,60 @@ def fill_mmlevel_row(df, position, level):
 
     return row
 
+def flip_position(df):
+    ''' return df with flipped trades position (opposite 'long' and 'profit_dollar') '''
     
+    for i, r in df.iterrows():
+        df['long'][i] = not r['long']
+        df['profit_dollar'][i] = - (r['profit_dollar'])
+
+    return df
+
+def trade_limit_analysis(df, parameter):
+    ''' '''
+    # create a subset of data with the specific parameter
+    data = df[df.parameters == parameter]
+
+    # calculate time range
+    timerange = data.entry_trade_time_iso8601.max() - data.entry_trade_time_iso8601.min()
+    period = timerange % timedelta(minutes=3)
+
+    # calculate metrics for each 3 min period
+    start = data.entry_trade_time_iso8601.min()
+    end = start + timedelta(minutes=3)
+    for i in range(period):
+        trade_count = data[]
+
+    pass
+
+
 def main():
-    # open json input file and convert to df
+    ''' open json input file and convert to df '''
     with open('fin dashboard/data.json') as f:
         data = json.load(f)
         df = pd.read_json(data)
     
-    # process file and export dash to json
+    ''' process file and export dash to json '''
     df = clean_data(df)
-    df.to_csv('fin dashboard/clean_data.csv')
+    # df.to_csv('fin dashboard/clean_data.csv')
     # print(df.dtypes)
 
     # fin_dash = create_fin_dash(df)
-    # mm_dash = creat_mmlevel_dash(df)
-
-    # print(fin_dash)
-    # print(mm_dash.dtypes)
-
     # dash.to_json('fin dashboard/fin_dash_data.json')
+    # print(fin_dash)
+
+    # mm_dash = creat_mmlevel_dash(df)
     # mm_dash.to_json('fin dashboard/mm_dash.json')
-    
-    # mm_dash.to_csv('fin dashboard/fin_data.csv')
+    # print(mm_dash)
+
+
+    flip = flip_position(df)
+    print(flip.long)
+
+
+
+
+
 
 if __name__ == "__main__":
     main()
