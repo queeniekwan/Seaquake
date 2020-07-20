@@ -271,16 +271,21 @@ def trade_limit_analysis(df, parameter):
     data = df[df.parameters == parameter]
 
     # calculate time range
-    timerange = data.entry_trade_time_iso8601.max() - data.entry_trade_time_iso8601.min()
-    period = timerange % timedelta(minutes=3)
+    timerange = data.entry_trade_time_unix.max() - data.entry_trade_time_unix.min()
+    period = timerange % 180
 
     # calculate metrics for each 3 min period
-    start = data.entry_trade_time_iso8601.min()
-    end = start + timedelta(minutes=3)
+    start = data.entry_trade_time_unix.min()
+    end = start + 180
+    trade_limit = []
     for i in range(period):
-        trade_count = data[]
+        trade_count = data[(data['entry_trade_time_unix'] >= start) & (data['entry_trade_time_unix'] < end)].count()['id']
+        start = end
+        end += 180
+        print(trade_count)
+        trade_limit.append(trade_count)
 
-    pass
+    
 
 
 def main():
@@ -292,7 +297,7 @@ def main():
     ''' process file and export dash to json '''
     df = clean_data(df)
     # df.to_csv('fin dashboard/clean_data.csv')
-    # print(df.dtypes)
+    # print(df.parameters.unique())
 
     # fin_dash = create_fin_dash(df)
     # dash.to_json('fin dashboard/fin_dash_data.json')
@@ -303,8 +308,10 @@ def main():
     # print(mm_dash)
 
 
-    flip = flip_position(df)
-    print(flip.long)
+    # flip = flip_position(df)
+    # print(flip.long)
+
+    trade_limit_analysis(df, 'bid-3-1-0.01-300-0.0003-5.0-0.0005-15-True')
 
 
 
